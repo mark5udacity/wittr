@@ -1,10 +1,9 @@
-const v1_name = 'wittr-static-v1';
-const v2_name = v1_name.replace('v1', 'v2');
+const staticCacheName = 'wittr-static-v42';
 
 self.addEventListener('install', event => {
 
   event.waitUntil(
-    caches.open(v2_name)
+    caches.open(staticCacheName)
         .then(cache => cache.addAll([
       '/',
       'js/main.js',
@@ -18,7 +17,11 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-      caches.delete(v1_name)
+      caches.keys()
+          .then(cacheNames => Promise.all(
+              cacheNames.filter(cacheName => cacheName.startsWith('wittr-') && cacheName !== staticCacheName)
+                  .map(cacheName => caches.delete(cacheName))
+          ))
   );
 });
 
