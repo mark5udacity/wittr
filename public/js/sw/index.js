@@ -1,31 +1,29 @@
-self.addEventListener('install', function(event) {
+const v1_name = 'wittr-static-v1';
+const v2_name = v1_name.replace('v1', 'v2');
+
+self.addEventListener('install', event => {
+
   event.waitUntil(
-    // TODO: change the site's theme, eg swap the vars in public/scss/_theme.scss
-    // Ensure at least $primary-color changes
-    // TODO: change cache name to 'wittr-static-v2'
-    caches.open('wittr-static-v1').then(function(cache) {
-      return cache.addAll([
-        '/',
-        'js/main.js',
-        'css/main.css',
-        'imgs/icon.png',
-        'https://fonts.gstatic.com/s/roboto/v15/2UX7WLTfW3W8TclTUvlFyQ.woff',
-        'https://fonts.gstatic.com/s/roboto/v15/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff'
-      ]);
-    })
+    caches.open(v2_name)
+        .then(cache => cache.addAll([
+      '/',
+      'js/main.js',
+      'css/main.css',
+      'imgs/icon.png',
+      'https://fonts.gstatic.com/s/roboto/v15/2UX7WLTfW3W8TclTUvlFyQ.woff',
+      'https://fonts.gstatic.com/s/roboto/v15/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff'
+    ]))
   );
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    // TODO: remove the old cache
+      caches.delete(v1_name)
   );
 });
 
-self.addEventListener('fetch', function(event) {
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(function(response) {
-      return response || fetch(event.request);
-    })
+    caches.match(event.request).then(response => response || fetch(event.request))
   );
 });
