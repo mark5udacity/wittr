@@ -1,42 +1,36 @@
-var staticCacheName = 'wittr-static-v2';
+var staticCacheName = 'wittr-static-v42';
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(staticCacheName).then(function(cache) {
-      return cache.addAll([
-        '/',
-        'js/main.js',
-        'css/main.css',
-        'imgs/icon.png',
-        'https://fonts.gstatic.com/s/roboto/v15/2UX7WLTfW3W8TclTUvlFyQ.woff',
-        'https://fonts.gstatic.com/s/roboto/v15/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff'
-      ]);
-    })
+    caches.open(staticCacheName).then(cache => cache.addAll([
+      '/',
+      'js/main.js',
+      'css/main.css',
+      'imgs/icon.png',
+      'https://fonts.gstatic.com/s/roboto/v15/2UX7WLTfW3W8TclTUvlFyQ.woff',
+      'https://fonts.gstatic.com/s/roboto/v15/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff'
+    ]))
   );
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.filter(function(cacheName) {
-          return cacheName.startsWith('wittr-') &&
-                 cacheName != staticCacheName;
-        }).map(function(cacheName) {
-          return caches.delete(cacheName);
-        })
-      );
-    })
+    caches.keys().then(cacheNames => Promise.all(
+        cacheNames.filter(cacheName => cacheName.startsWith('wittr-') &&
+            cacheName != staticCacheName)
+            .map(cacheName => caches.delete(cacheName))
+    ))
   );
 });
 
-self.addEventListener('fetch', function(event) {
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(function(response) {
-      return response || fetch(event.request);
-    })
+    caches.match(event.request).then(response => response || fetch(event.request))
   );
 });
 
-// TODO: listen for the "message" event, and call
-// skipWaiting if you get the appropriate message
+self.addEventListener('message', event => {
+  if (event.data === {skipWaiting: true}) {
+    self.skipWaiting();
+  }
+});

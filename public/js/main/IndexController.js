@@ -12,11 +12,13 @@ export default function IndexController(container) {
 }
 
 IndexController.prototype._registerServiceWorker = function() {
-  if (!navigator.serviceWorker) return;
+  if (!navigator.serviceWorker) {
+    return;
+  }
 
-  var indexController = this;
+  const indexController = this;
 
-  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
     if (!navigator.serviceWorker.controller) {
       return;
     }
@@ -31,18 +33,15 @@ IndexController.prototype._registerServiceWorker = function() {
       return;
     }
 
-    reg.addEventListener('updatefound', function() {
-      indexController._trackInstalling(reg.installing);
-    });
+    reg.addEventListener('updatefound', () => indexController._trackInstalling(reg.installing));
   });
 
-  // TODO: listen for the controlling service worker changing
-  // and reload the page
+  navigator.serviceWorker.addEventListener('controllerchange', () => Location.reload());
 };
 
 IndexController.prototype._trackInstalling = function(worker) {
-  var indexController = this;
-  worker.addEventListener('statechange', function() {
+  const indexController = this;
+  worker.addEventListener('statechange', () => {
     if (worker.state == 'installed') {
       indexController._updateReady(worker);
     }
@@ -55,8 +54,12 @@ IndexController.prototype._updateReady = function(worker) {
   });
 
   toast.answer.then(function(answer) {
-    if (answer != 'refresh') return;
-    // TODO: tell the service worker to skipWaiting
+    if (answer !== 'refresh') {
+      return;
+    }
+
+
+    worker.postMessage({skipWaiting: true});
   });
 };
 
