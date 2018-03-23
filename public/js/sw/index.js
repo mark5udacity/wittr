@@ -1,4 +1,4 @@
-var staticCacheName = 'wittr-static-v3';
+var staticCacheName = 'wittr-static-v42';
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -23,14 +23,14 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  let matched;
-  if (event.request.url === '/') {
-    matched = caches.match('/skeleton');
-  } else {
-    matched = caches.match(event.request);
+  const reqUrl = new URL(event.request.url);
+  if (reqUrl.origin === location.origin) {
+    if (reqUrl.pathname === '/') {
+      event.respondWith(caches.match('/skeleton'));
+    }
   }
 
-  event.respondWith(matched.then(response => response || fetch(event.request)));
+  event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
 });
 
 self.addEventListener('message', event => {
