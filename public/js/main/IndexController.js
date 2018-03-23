@@ -14,13 +14,7 @@ export default function IndexController(container) {
 IndexController.prototype._registerServiceWorker = function() {
   if (!navigator.serviceWorker) return;
 
-  var indexController = this;
-
-  function installedStateChange() {
-    if (this.state === 'installed') {
-      indexController._updateReady();
-    }
-  }
+  const indexController = this;
 
   navigator.serviceWorker.register('/sw.js').then(function(reg) {
     if (!navigator.serviceWorker.controller) {
@@ -34,12 +28,24 @@ IndexController.prototype._registerServiceWorker = function() {
     }
 
     if (reg.installing) {
-      reg.installing.addEventListener('statechange', installedStateChange);
+      indexController._trackInstalling(reg.installing);
       return;
     }
 
-    reg.addEventListener('updateFound', () => reg.installing.addEventListener('statechange'), installedStateChange);
+    reg.addEventListener('updateFound', () => indexController._trackInstalling(reg.installing));
   });
+};
+
+IndexController.prototype._trackInstalling = function (worker) {
+  const indexController = this;
+
+  function installedStateChange() {
+    if (this.state === 'installed') {
+      indexController._updateReady();
+    }
+  }
+
+  worker.addEventListener('statechange', installedStateChange);
 };
 
 IndexController.prototype._updateReady = function() {
