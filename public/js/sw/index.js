@@ -1,4 +1,4 @@
-var staticCacheName = 'wittr-static-v42';
+var staticCacheName = 'wittr-static-v422';
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -30,7 +30,7 @@ self.addEventListener('fetch', event => {
 });
 
 self.addEventListener('message', event => {
-  if (event.data === {skipWaiting: true}) {
+  if (event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
 });

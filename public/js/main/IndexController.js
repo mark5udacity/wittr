@@ -36,7 +36,7 @@ IndexController.prototype._registerServiceWorker = function() {
     reg.addEventListener('updatefound', () => indexController._trackInstalling(reg.installing));
   });
 
-  navigator.serviceWorker.addEventListener('controllerchange', () => Location.reload());
+  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
 };
 
 IndexController.prototype._trackInstalling = function(worker) {
@@ -59,7 +59,7 @@ IndexController.prototype._updateReady = function(worker) {
     }
 
 
-    worker.postMessage({skipWaiting: true});
+    worker.postMessage({action: 'skipWaiting'});
   });
 };
 
