@@ -1,15 +1,11 @@
-self.addEventListener('fetch', function(event) {
+self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request).then(function(response) {
-      if (response.status === 404) {
-        // TODO: instead, respond with the gif at
-        // /imgs/dr-evil.gif
-        // using a network request
-        return new Response("Whoops, not found");
-      }
-      return response;
-    }).catch(function() {
-      return new Response("Uh oh, that totally failed!");
-    })
+    fetch(event.request)
+        .then(response => {
+          if (response.status === 404) {
+            return fetch('/imgs/dr-evil.gif');
+          }
+          return response;
+        }).catch(() => new Response("Uh oh, that totally failed!"))
   );
 });
