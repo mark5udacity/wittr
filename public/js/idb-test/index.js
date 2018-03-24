@@ -1,17 +1,30 @@
+/* eslint-disable no-case-declarations */
 import idb from 'idb';
 
-var dbPromise = idb.open('test-db', 3, function(upgradeDb) {
-  switch(upgradeDb.oldVersion) {
+const CUR_IDB_VERSION = 4;
+
+const dbPromise = idb.open('test-db', CUR_IDB_VERSION, upgradeDb => {
+  switch (upgradeDb.oldVersion) {
     case 0:
-      var keyValStore = upgradeDb.createObjectStore('keyval');
+      const keyValStore = upgradeDb.createObjectStore('keyval');
       keyValStore.put("world", "hello");
+      // intentional fallthrough
     case 1:
-      upgradeDb.createObjectStore('people', { keyPath: 'name' });
+      upgradeDb.createObjectStore('people', {keyPath: 'name'});
+      // intentional fallthrough
     case 2:
-      var peopleStore = upgradeDb.transaction.objectStore('people');
+      const peopleStore = upgradeDb.transaction.objectStore('people');
       peopleStore.createIndex('animal', 'favoriteAnimal');
+      // intentional fallthrough
+    case 3:
+      peopleStore.createIndex('age', 'age');
+
+
+      break;
+    default:
+      console.error(`Unhandled prior version: ${upgradeDb.oldVersion}! 
+       Did you forget to add a case or bump vs correctly?  Current version: ${CUR_IDB_VERSION}`);
   }
-  // TODO: create an index on 'people' named 'age', ordered by 'age'
 });
 
 // read "hello" in "keyval"
@@ -87,4 +100,11 @@ dbPromise.then(function(db) {
   console.log('Cat people:', people);
 });
 
-// TODO: console.log all people ordered by age
+// console.log all people ordered by age
+dbPromise.then(db => {
+  const tx = db.transaction('people');
+  const pplStore = tx.objectStore('people');
+  const ageIdx = pplStore.index('age');
+
+  return ageIdx.getAll();
+}).then(ppl => console.log(`People by age`, ppl));
