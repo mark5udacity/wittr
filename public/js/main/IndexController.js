@@ -2,6 +2,8 @@ import PostsView from './views/Posts';
 import ToastsView from './views/Toasts';
 import idb from 'idb';
 
+const CURRENT_IDB_VERSION = 1;
+
 function openDatabase() {
   // If the browser doesn't support service worker,
   // we don't care about having a database
@@ -14,6 +16,22 @@ function openDatabase() {
   // that uses 'id' as its key
   // and has an index called 'by-date', which is sorted
   // by the 'time' property
+
+  return idb.open('wittr', CURRENT_IDB_VERSION, upgradeDb => {
+    switch (upgradeDb.oldVersion) {
+      // eslint-disable-next-line no-case-declarations
+      case 0:
+        const kvStore = upgradeDb.createObjectStore('wittrs', { keyPath: 'id'});
+        kvStore.createIndex('by-date', 'time');
+
+
+        break;
+      default:
+        console.error(`Unhandled prior version: ${upgradeDb.oldVersion}! 
+       Did you forget to add a case or bump vs correctly?  Current version: ${CURRENT_IDB_VERSION}`);
+        break;
+    }
+  });
 }
 
 export default function IndexController(container) {
@@ -128,13 +146,17 @@ IndexController.prototype._openSocket = function() {
 
 // called when the web socket sends message data
 IndexController.prototype._onSocketMessage = function(data) {
-  var messages = JSON.parse(data);
+  const messages = JSON.parse(data);
 
-  this._dbPromise.then(function(db) {
-    if (!db) return;
+  this._dbPromise.then(db => {
+    if (!db) {
+      return;
+    }
 
-    // TODO: put each message into the 'wittrs'
-    // object store.
+    const tx = db.transaction('wittrs', 'readwrite');
+    const kvStore = tx.objectStore('wittrs');
+    messages.forEach(msg => kvStore.put(msg));
+    return tx.complete;
   });
 
   this._postsView.addPosts(messages);
