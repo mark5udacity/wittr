@@ -5,38 +5,31 @@ var allCaches = [
   contentImgsCache
 ];
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(staticCacheName).then(function(cache) {
-      return cache.addAll([
-        '/skeleton',
-        'js/main.js',
-        'css/main.css',
-        'imgs/icon.png',
-        'https://fonts.gstatic.com/s/roboto/v15/2UX7WLTfW3W8TclTUvlFyQ.woff',
-        'https://fonts.gstatic.com/s/roboto/v15/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff'
-      ]);
-    })
+    caches.open(staticCacheName).then(cache => cache.addAll([
+      '/skeleton',
+      'js/main.js',
+      'css/main.css',
+      'imgs/icon.png',
+      'https://fonts.gstatic.com/s/roboto/v15/2UX7WLTfW3W8TclTUvlFyQ.woff',
+      'https://fonts.gstatic.com/s/roboto/v15/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff'
+    ]))
   );
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.filter(function(cacheName) {
-          return cacheName.startsWith('wittr-') &&
-                 !allCaches.includes(cacheName);
-        }).map(function(cacheName) {
-          return caches.delete(cacheName);
-        })
-      );
-    })
+    caches.keys().then(cacheNames => Promise.all(
+        cacheNames.filter(cacheName => cacheName.startsWith('wittr-') &&
+            !allCaches.includes(cacheName))
+            .map(cacheName => caches.delete(cacheName))
+    ))
   );
 });
 
-self.addEventListener('fetch', function(event) {
-  var requestUrl = new URL(event.request.url);
+self.addEventListener('fetch', event => {
+  const requestUrl = new URL(event.request.url);
 
   if (requestUrl.origin === location.origin) {
     if (requestUrl.pathname === '/') {
@@ -50,9 +43,8 @@ self.addEventListener('fetch', function(event) {
   }
 
   event.respondWith(
-    caches.match(event.request).then(function(response) {
-      return response || fetch(event.request);
-    })
+    caches.match(event.request)
+        .then(response => response || fetch(event.request))
   );
 });
 
@@ -62,17 +54,25 @@ function servePhoto(request) {
   // But storageUrl has the -800px.jpg bit missing.
   // Use this url to store & match the image in the cache.
   // This means you only store one copy of each photo.
-  var storageUrl = request.url.replace(/-\d+px\.jpg$/, '');
+  const storageUrl = request.url.replace(/-\d+px\.jpg$/, '');
 
-  // TODO: return images from the "wittr-content-imgs" cache
-  // if they're in there. Otherwise, fetch the images from
-  // the network, put them into the cache, and send it back
-  // to the browser.
-  //
-  // HINT: cache.put supports a plain url as the first parameter
+
+  return caches.open(contentImgsCache)
+      .then(cache => cache.match(storageUrl)
+          .then(response => {
+            if (response) {
+              return response;
+            }
+
+            return fetch(request)
+                .then(networkResponse => {
+                    cache.put(storageUrl, networkResponse.clone());
+                    return networkResponse;
+                  });
+            }));
 }
 
-self.addEventListener('message', function(event) {
+self.addEventListener('message', event => {
   if (event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
