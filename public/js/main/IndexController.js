@@ -156,14 +156,21 @@ IndexController.prototype._openSocket = function() {
 };
 
 IndexController.prototype._cleanImageCache = function() {
-  return this._dbPromise.then(function(db) {
-    if (!db) return;
+  return this._dbPromise.then(db => {
+    if (!db) {
+      return;
+    }
 
-    // TODO: open the 'wittr' object store, get all the messages,
-    // gather all the photo urls.
-    //
-    // Open the 'wittr-content-imgs' cache, and delete any entry
-    // that you no longer need.
+    const imagesNeeded = [];
+    return db.transaction('wittrs').objectStore('wittrs').getAll().then(messages => {
+      messages.map(msg => msg.photo)
+          .filter(photo => photo)
+          .forEach(photo => imagesNeeded.push(photo));
+
+      return caches.open('wittr-content-imgs');
+    }).then(cache => cache.keys()
+        .then(requests => requests.filter(req => !imagesNeeded.includes(new URL(req.url).pathname))
+            .forEach(req => cache.delete(req))));
   });
 };
 
